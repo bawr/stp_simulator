@@ -306,9 +306,9 @@ def buildNetworkFromDOT(file):
         m = d.split(':')
 
         src_node = n[0]
-        src_port = int(n[1])
+        src_port = n[1]
         dst_node = m[0]
-        dst_port = int(m[1])
+        dst_port = m[1]
 
         g1 = net.getBridge(src_node, nodes[src_node])
         g2 = net.getBridge(dst_node, nodes[dst_node])
