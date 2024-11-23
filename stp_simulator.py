@@ -312,18 +312,19 @@ def buildNetworkFromDOT(file):
 
         g1 = net.getBridge(src_node, nodes[src_node])
         g2 = net.getBridge(dst_node, nodes[dst_node])
-        speed = int(attr['speed'])
+        speed = int(attr.get('speed', '100'))
         net.connect(g1, src_port, g2, dst_port, speed)
     return net
 
 
-STEPS = 5
+STEPS = 10
 LOG_FILE = 'stp_simulator.log'
 
 
 def setArguments():
     parser = argparse.ArgumentParser()
     parser.add_argument("-i", "--infile", help="Input file")
+    parser.add_argument("-o", "--outfile", help="Output file")
     parser.add_argument("-s", "--steps", help="Number of simulation steps")
     parser.add_argument("-l", "--loglevel", help="Set the logging level")
     args = parser.parse_args()
@@ -348,12 +349,11 @@ def setArguments():
         print('usage: stp_simulator.py -i <inputfile>')
         sys.exit(0)
 
-    return args.infile, steps
+    return args.infile, args.outfile, steps
 
 
 if __name__ == "__main__":
-
-    infile, steps = setArguments()
+    infile, outfile, steps = setArguments()
 
     # Build the network
     net = buildNetworkFromDOT(infile)
