@@ -23,6 +23,7 @@ SOFTWARE.
 """
 
 import networkx.drawing as nxd
+import pydot
 import logging
 from netaddr import EUI
 import sys
@@ -80,10 +81,11 @@ class Port(object):
         ROLE_UNDESG: ST_BLOCKED
     }
 
-    def __init__(self, num, cost):
+    def __init__(self, num, cost, bridge):
         self.num = num
         self.cost = cost
         self.remote_port = None
+        self.bridge = bridge
         self.resetSTP()
 
     def resetSTP(self):
@@ -246,8 +248,8 @@ class Network(object):
         return self.bridges.values()
 
     def connect(self, br1, port1, br2, port2, speed):
-        local = Port(port1, self.COST_MAP[speed])
-        remote = Port(port2, self.COST_MAP[speed])
+        local = Port(port1, self.COST_MAP[speed], br1)
+        remote = Port(port2, self.COST_MAP[speed], br2)
         local.setRemote(remote)
         remote.setRemote(local)
         br1.ports.append(local)
@@ -312,9 +314,57 @@ def buildNetworkFromDOT(file):
 
         g1 = net.getBridge(src_node, nodes[src_node])
         g2 = net.getBridge(dst_node, nodes[dst_node])
-        speed = int(attr.get('speed', '100'))
+        speed = int(attr.get('speed', '10'))
         net.connect(g1, src_port, g2, dst_port, speed)
     return net
+
+
+def addPortStatus(port_dict, port):
+    label = ":".join([port.bridge.label, port.num])
+    port_dict[label] = (port.status == Port.ST_FORWARD)
+
+
+def getPortStatusDict(net):
+    port_dict = {}
+    for br in net.getAllBridges():
+        for p in br.ports:
+            addPortStatus(port_dict, p)
+            addPortStatus(port_dict, p.remote_port)
+    return port_dict
+
+
+def getEdgeDict(edge_list):
+    edge_dict = {}
+    for e in edge_list:
+        src = e.get_source()
+        dst = e.get_destination()
+        src = ":".join(src.split(':')[:2])
+        dst = ":".join(dst.split(':')[:2])
+        edge_dict[(src, dst)] = e
+    return edge_dict
+
+
+def renderOutput(net, infile, outfile):
+    dot = pydot.graph_from_dot_file(infile)[0]
+    edge_dict = getEdgeDict(dot.get_edge_list())
+    port_dict = getPortStatusDict(net)
+    for (src, dst), edge in edge_dict.items():
+        src_fwd = port_dict[src]
+        dst_fwd = port_dict[dst]
+        edge.set_dir('both')
+        if src_fwd and dst_fwd:
+            edge.set_color('darkgreen')
+        else:
+            edge.set_color('gray')
+        if src_fwd:
+            edge.set_arrowtail('inv')
+        else:
+            edge.set_arrowtail('dot')
+        if dst_fwd:
+            edge.set_arrowhead('inv')
+        else:
+            edge.set_arrowhead('dot')
+    dot.write_png(outfile)
 
 
 STEPS = 10
@@ -376,3 +426,6 @@ if __name__ == "__main__":
     # Print results
     for br in net.getAllBridges():
         br.reportSTP()
+
+    if outfile:
+        renderOutput(net, infile, outfile)
