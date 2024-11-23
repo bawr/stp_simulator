@@ -13,34 +13,44 @@ The spanning tree algorithm is based on the description in *Radia Perlman. 1999.
 ## Example Network
 
 ```
-// A dot file of a 5-switch network
-// Switches' shape and labels are useful for displaying the switch ports only,
-// they have no effect on the simulation.
+graph G {
+  graph [splines=false dpi=200];
+  node [shape=record];
 
-graph MG {
-  node [shape=record]
+  S1 [mac="FF:FF:FF:00:00:10" label="{S1|{<1>1|<2>2|<3>3|<4>4}}"];
+  S2 [mac="FF:FF:FF:00:00:20" label="{S2|{<1>1|<2>2|<3>3|<4>4}}"];
 
-  SW1 [label="<1>1|<2>2|<3>3" mac="00:00:00:00:00:01" priority=28672 xlabel=SW1]
-  SW2 [label="<1>1|<2>2|<3>3|<4>4" mac="00:00:00:00:00:02" priority=32768 xlabel=SW2]
-  SW3 [label="<1>1|<2>2|<3>3" mac="00:00:00:00:00:03" priority=32768 xlabel=SW3]
-  SW4 [label="<1>1|<2>2|<3>3" mac="00:00:00:00:00:04" priority=32768 xlabel=SW4]
-  SW5 [label="<1>1" mac="00:00:00:00:00:05" priority=32768 xlabel=SW5]
+  L1 [mac="FF:FF:FF:00:10:FF" label="{{<1>1|<2>2|<3>3|<4>4}|L1|{<5>5|<6>6|<7>7|<8>8}}}"];
+  L2 [mac="FF:FF:FF:00:20:FF" label="{{<1>1|<2>2|<3>3|<4>4}|L2|{<5>5|<6>6|<7>7|<8>8}}}"];
 
-  SW1:1 -- SW2:3 [speed=1000];
-  SW1:2 -- SW3:3 [speed=1000];
-  SW1:3 -- SW4:1 [speed=1000];
+  X1 [mac="FF:FF:FF:10:FF:FF" label="{{<1>1|<2>2|<3>3|<4>4}|X1}"];
+  X2 [mac="FF:FF:FF:20:FF:FF" label="{{<1>1|<2>2|<3>3|<4>4}|X2}"];
 
-  SW2:1 -- SW3:1 [speed=1000];
-  SW2:2 -- SW4:2 [speed=1000];
-  SW2:4 -- SW4:3 [speed=1000];
+  S1:1:s -- L1:1:n;
+  S1:2:s -- L1:2:n;
+  S1:3:s -- L2:1:n;
+  S1:4:s -- L2:2:n;
 
-  SW3:2 -- SW5:1 [speed=1000];
-
+  S2:1:s -- L1:3:n;
+  S2:2:s -- L1:4:n;
+  S2:3:s -- L2:3:n;
+  S2:4:s -- L2:4:n;
+  
+  L1:5:s -- X1:1:n;
+  L1:6:s -- X1:2:n;
+  L1:7:s -- X1:3:n;
+  L1:8:s -- X1:4:n;
+  
+  L2:5:s -- X2:1:n;
+  L2:6:s -- X2:2:n;
+  L2:7:s -- X2:3:n;
+  L2:8:s -- X2:4:n;
 }
 ```
 
-![Network Example](network.png)
+![Network example](network.png)
 
+(For extra options available, see the examples directory.)
 
 ## Installation
 
@@ -52,148 +62,93 @@ graph MG {
 Run the application with a dot file as an input
 
 ```
->python3 stp_simulator.py -i examples/testnet.dot
+$ python3 stp_simulator.py -i network.dot -o network-stp.png
 ```
+
+The output PNG contains the rendered STP stimulation result.
+
+![Rendered result](network-stp.png)
 
 The output should be similar to this:
 
 ```
-Bridge: SW1:
-ID: 0x7000000000000001. This bridge is Root.
+Bridge: S1:      
+ID: 0x8000ffffff000010. This bridge is Root.
 -----------------------------------------------------------------
-Port     Role            Status          Cost     Cost-to-Root
+Port     Role            Status          Cost     Cost-to-Root   
 -----------------------------------------------------------------
-1        Designated      Forwarding      4        -
-2        Designated      Forwarding      4        -
-3        Designated      Forwarding      4        -
+1        Designated      Forwarding      100      -              
+2        Designated      Forwarding      100      -              
+3        Designated      Forwarding      100      -              
+4        Designated      Forwarding      100      -              
 
-Bridge: SW2:
-ID: 0x8000000000000002.
+Bridge: L1:
+ID: 0x8000ffffff0010ff. 
 -----------------------------------------------------------------
-Port     Role            Status          Cost     Cost-to-Root
+Port     Role            Status          Cost     Cost-to-Root   
 -----------------------------------------------------------------
-1        Designated      Forwarding      4        -
-2        Designated      Forwarding      4        -
-3        Root Port       Forwarding      4        4
-4        Designated      Forwarding      4        -
+1        Root Port       Forwarding      100      100            
+2        Undesignated    Blocked         100      -              
+3        Designated      Forwarding      100      -              
+4        Designated      Forwarding      100      -              
+5        Designated      Forwarding      100      -              
+6        Designated      Forwarding      100      -              
+7        Designated      Forwarding      100      -              
+8        Designated      Forwarding      100      -              
 
-Bridge: SW3:
-ID: 0x8000000000000003.
+Bridge: L2:
+ID: 0x8000ffffff0020ff. 
 -----------------------------------------------------------------
-Port     Role            Status          Cost     Cost-to-Root
+Port     Role            Status          Cost     Cost-to-Root   
 -----------------------------------------------------------------
-1        Undesignated    Blocked         4        -
-2        Designated      Forwarding      4        -
-3        Root Port       Forwarding      4        4
+1        Root Port       Forwarding      100      100            
+2        Undesignated    Blocked         100      -              
+3        Designated      Forwarding      100      -              
+4        Designated      Forwarding      100      -              
+5        Designated      Forwarding      100      -              
+6        Designated      Forwarding      100      -              
+7        Designated      Forwarding      100      -              
+8        Designated      Forwarding      100      -              
 
-Bridge: SW4:
-ID: 0x8000000000000004.
+Bridge: S2:
+ID: 0x8000ffffff000020. 
 -----------------------------------------------------------------
-Port     Role            Status          Cost     Cost-to-Root
+Port     Role            Status          Cost     Cost-to-Root   
 -----------------------------------------------------------------
-1        Root Port       Forwarding      4        4
-2        Undesignated    Blocked         4        -
-3        Undesignated    Blocked         4        -
+1        Root Port       Forwarding      100      200            
+2        Undesignated    Blocked         100      -              
+3        Undesignated    Blocked         100      -              
+4        Undesignated    Blocked         100      -              
 
-Bridge: SW5:
-ID: 0x8000000000000005.
+Bridge: X1:
+ID: 0x8000ffffff10ffff. 
 -----------------------------------------------------------------
-Port     Role            Status          Cost     Cost-to-Root
+Port     Role            Status          Cost     Cost-to-Root   
 -----------------------------------------------------------------
-1        Root Port       Forwarding      4        8
+1        Root Port       Forwarding      100      200            
+2        Undesignated    Blocked         100      -              
+3        Undesignated    Blocked         100      -              
+4        Undesignated    Blocked         100      -              
+
+Bridge: X2:
+ID: 0x8000ffffff20ffff. 
+-----------------------------------------------------------------
+Port     Role            Status          Cost     Cost-to-Root   
+-----------------------------------------------------------------
+1        Root Port       Forwarding      100      200            
+2        Undesignated    Blocked         100      -              
+3        Undesignated    Blocked         100      -              
+4        Undesignated    Blocked         100      -              
 ```
 
 A log file can be produced to show details:
 
 ```
->python3 stp_simulator.py -i examples/testnet.dot -l DEBUG
+$ python3 stp_simulator.py -i network.dot -o network-stp.png -l DEBUG
 ```
 
-Which prodcues:
+The simulation steps should be proportional to the size of the network to ensure that all switches receive the root's BPDU. Use the option '-s' to change the default number of steps (10):
 
 ```
-INFO:root:Reading file: testnet.dot
-INFO:root:Simulation starting.
-DEBUG:root:Bridge 0x7000000000000001 boots.
-DEBUG:root:Bridge 0x8000000000000002 boots.
-DEBUG:root:Bridge 0x8000000000000003 boots.
-DEBUG:root:Bridge 0x8000000000000004 boots.
-DEBUG:root:Bridge 0x8000000000000005 boots.
-DEBUG:root:Entering Step: 0
-DEBUG:root:Bridge 0x7000000000000001 best BPDU is [0x7000000000000001, 0, 0x7000000000000001, 0] via port None.
-DEBUG:root:Bridge 0x7000000000000001 is Root bridge.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 1] via port 1.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 2] via port 2.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 best BPDU is [0x7000000000000001, 4, 0x8000000000000002, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 1.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 4.
-DEBUG:root:Bridge 0x8000000000000003 best BPDU is [0x7000000000000001, 4, 0x8000000000000003, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000003 sends BPDU [0x7000000000000001, 4, 0x8000000000000003, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000004 best BPDU is [0x7000000000000001, 4, 0x8000000000000004, 1] via port 1.
-DEBUG:root:Bridge 0x8000000000000005 best BPDU is [0x7000000000000001, 8, 0x8000000000000005, 1] via port 1.
-DEBUG:root:Entering Step: 1
-DEBUG:root:Bridge 0x7000000000000001 best BPDU is [0x7000000000000001, 0, 0x7000000000000001, 0] via port None.
-DEBUG:root:Bridge 0x7000000000000001 is Root bridge.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 1] via port 1.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 2] via port 2.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 best BPDU is [0x7000000000000001, 4, 0x8000000000000002, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 1.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 4.
-DEBUG:root:Bridge 0x8000000000000003 best BPDU is [0x7000000000000001, 4, 0x8000000000000003, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000003 sends BPDU [0x7000000000000001, 4, 0x8000000000000003, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000004 best BPDU is [0x7000000000000001, 4, 0x8000000000000004, 1] via port 1.
-DEBUG:root:Bridge 0x8000000000000005 best BPDU is [0x7000000000000001, 8, 0x8000000000000005, 1] via port 1.
-DEBUG:root:Entering Step: 2
-DEBUG:root:Bridge 0x7000000000000001 best BPDU is [0x7000000000000001, 0, 0x7000000000000001, 0] via port None.
-DEBUG:root:Bridge 0x7000000000000001 is Root bridge.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 1] via port 1.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 2] via port 2.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 best BPDU is [0x7000000000000001, 4, 0x8000000000000002, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 1.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 4.
-DEBUG:root:Bridge 0x8000000000000003 best BPDU is [0x7000000000000001, 4, 0x8000000000000003, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000003 sends BPDU [0x7000000000000001, 4, 0x8000000000000003, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000004 best BPDU is [0x7000000000000001, 4, 0x8000000000000004, 1] via port 1.
-DEBUG:root:Bridge 0x8000000000000005 best BPDU is [0x7000000000000001, 8, 0x8000000000000005, 1] via port 1.
-DEBUG:root:Entering Step: 3
-DEBUG:root:Bridge 0x7000000000000001 best BPDU is [0x7000000000000001, 0, 0x7000000000000001, 0] via port None.
-DEBUG:root:Bridge 0x7000000000000001 is Root bridge.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 1] via port 1.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 2] via port 2.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 best BPDU is [0x7000000000000001, 4, 0x8000000000000002, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 1.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 4.
-DEBUG:root:Bridge 0x8000000000000003 best BPDU is [0x7000000000000001, 4, 0x8000000000000003, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000003 sends BPDU [0x7000000000000001, 4, 0x8000000000000003, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000004 best BPDU is [0x7000000000000001, 4, 0x8000000000000004, 1] via port 1.
-DEBUG:root:Bridge 0x8000000000000005 best BPDU is [0x7000000000000001, 8, 0x8000000000000005, 1] via port 1.
-DEBUG:root:Entering Step: 4
-DEBUG:root:Bridge 0x7000000000000001 best BPDU is [0x7000000000000001, 0, 0x7000000000000001, 0] via port None.
-DEBUG:root:Bridge 0x7000000000000001 is Root bridge.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 1] via port 1.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 2] via port 2.
-DEBUG:root:Bridge 0x7000000000000001 sends BPDU [0x7000000000000001, 0, 0x7000000000000001, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 best BPDU is [0x7000000000000001, 4, 0x8000000000000002, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 1.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000002 sends BPDU [0x7000000000000001, 4, 0x8000000000000002, 3] via port 4.
-DEBUG:root:Bridge 0x8000000000000003 best BPDU is [0x7000000000000001, 4, 0x8000000000000003, 3] via port 3.
-DEBUG:root:Bridge 0x8000000000000003 sends BPDU [0x7000000000000001, 4, 0x8000000000000003, 3] via port 2.
-DEBUG:root:Bridge 0x8000000000000004 best BPDU is [0x7000000000000001, 4, 0x8000000000000004, 1] via port 1.
-DEBUG:root:Bridge 0x8000000000000005 best BPDU is [0x7000000000000001, 8, 0x8000000000000005, 1] via port 1.
-INFO:root:Simulation completed.
-```
-
-The simulation steps should be proportional to the size of the network to ensure that all switches receive the root's BPDU. Use the option '-s' to change the default number of steps (5):
-
-```
->python3 stp_simulator.py -i testnet.dot -s 10
+$ python3 stp_simulator.py -i network.dot -s 20
 ```
